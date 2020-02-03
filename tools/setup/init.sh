@@ -4,6 +4,7 @@ mkdir .dependencies
 rm -rf .dependencies/*
 cd .dependencies
 git clone https://notabug.org/namark/cpp_tools
+git clone https://notabug.org/namark/libsimple_file
 git clone https://notabug.org/namark/libsimple_support
 git clone https://notabug.org/namark/libsimple_geom
 git clone https://notabug.org/namark/libsimple_sdlcore

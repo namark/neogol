@@ -2,6 +2,7 @@
 cd .dependencies
 
 cd cpp_tools
+make PREFIX=../libsimple_file ../libsimple_file/include/make_templates/header_only_lib
 make PREFIX=../libsimple_support ../libsimple_support/include/make_templates/header_only_lib
 make PREFIX=../libsimple_geom ../libsimple_geom/include/make_templates/header_only_lib
 make PREFIX=../libsimple_sdlcore ../libsimple_sdlcore/include/make_templates/static_lib
@@ -31,6 +32,10 @@ make install PREFIX=../../ "$@"
 make install PREFIX=../libsimple_graphical
 make install PREFIX=../libsimple_interactive
 make install PREFIX=../libsimple_musical
+cd ..
+
+cd libsimple_file
+make install PREFIX=../../ "$@"
 cd ..
 
 cd libsimple_graphical

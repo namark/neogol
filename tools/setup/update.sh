@@ -6,6 +6,10 @@ cd cpp_tools
 git pull -r
 cd ..
 
+cd libsimple_file
+git pull -r
+cd ..
+
 cd libsimple_support
 git pull -r
 cd ..
