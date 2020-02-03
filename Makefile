@@ -7,6 +7,11 @@ override LDFLAGS	+= $(shell cat .ldflags | xargs)
 override LDFLAGS	+= -L./lib
 override LDLIBS		+= -lSDL2main -lSDL2 -lpthread
 
+ifdef ENABLE_THEORA_RECORDER
+override CPPFLAGS	+= -DENABLE_THEORA_RECORDER
+override LDLIBS		+= -ltheoraenc -ltheoradec -logg
+endif
+
 PREFIX	:= $(DESTDIR)/usr/local
 BINDIR	:= $(PREFIX)/bin
 
