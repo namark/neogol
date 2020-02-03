@@ -3,8 +3,9 @@
 Required software:
 1. git, to fetch some dependencies
 2. GNU stuff (make, coreutils, findutils, binutils)
-2. C++ 17 compliant compiler
-3. SDL 2.0 runtime and development libraries
+3. C++ 17 compliant compiler
+4. SDL 2.0 runtime and development libraries
+5. Optionally theora and ogg libraries for video recording functionality.
 
 ## Specific instruction for Debian based distributions
 (Something similar should work on your favorite system/package manager as well. Know your distro!)
@@ -19,6 +20,11 @@ sudo apt install git coreutils findutils build-essential libsdl2-2.0 libsdl2-dev
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test
 sudo apt update
 sudo apt install g++-7 -y
+```
+
+3. Optionally (for video recording) install theora and ogg libraries
+```bash
+sudo apt install libtheora-dev libogg-dev
 ```
 
 ## Specific instruction for Windows

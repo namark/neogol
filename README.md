@@ -2,15 +2,18 @@ Multi-threaded game of life with 8 generation history (current + 7 generations b
 
 ## Use instructions
 ### Overview
-Mouse - draw living cells.
-Enter/Return - toggle life at ~60 generation per second.
-Right Arrow - step forward one generation.
-Left Arrow - step backward one generation.
-+ - zoom in
-- - zoom out
+Mouse - draw living cells.<br />
+Enter/Return - toggle life at ~60 generation per second.<br />
+Right Arrow - step forward one generation.<br />
+Left Arrow - step backward one generation.<br />
+\+ - zoom in<br />
+\- - zoom out<br />
+Shift+R - start/stop recording, when recording is stopped, it'll take some time to render it to a file, frames being played back at the rate of video encoding<br />
+
 
 ### Special secret dangerous command line parameters
-None so far
+Positional:
+1. filename for recording, required to enable the recording functionality
 
 ## Build instructions
 Below are build instructions for GNU systems (including cygwin on Windows), primarily using `make`. If that does not suit your needs it should not be hard to set this project up with your favorite build system/IDE. See the dependencies in the next section. <br />
@@ -25,8 +28,12 @@ Below are build instructions for GNU systems (including cygwin on Windows), prim
 [libsimple_musical](https://notabug.org/namark/libsimple_musical) <br />
 [libsimple_geom](https://notabug.org/namark/libsimple_geom) <br />
 [libsimple_support](https://notabug.org/namark/libsimple_support) <br />
+[libsimple_file](https://notabug.org/namark/libsimple_file) <br />
 [libsimple_sdlcore](https://notabug.org/namark/libsimple_sdlcore) <br />
 [cpp_tools](https://notabug.org/namark/cpp_tools) <br />
+Optional: <br />
+[libtheora](https://theora.org) <br />
+[libogg](https://xiph.org/ogg/) <br />
 
 The SDL2 headers are expected to be in a directory named SDL2. libsimple are all static libraries. cpp_tools is only necessary for building with GNU make as outlined in the previous section.<br />
 There are also source archives in releases, which have all the simple libraries included, so using that you won't have to individually setup those.

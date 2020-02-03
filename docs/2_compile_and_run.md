@@ -1,6 +1,11 @@
 # Compilation and start
 
 ## Common for all GNU systems
+Recommended - turn on optimizations for your compiler. You can do that using the CXXFLAGS variable, for example:<br />
+```bash
+export CXXFLAGS="$CXXFLAGS -O3 -DNDEBUG -fno-rtti"
+```
+
 1. For the sake of completeness - obtain the project and change directory to its root:
 ```bash
 git clone https://notabug.org/namark/neogol
@@ -22,10 +27,18 @@ Otherwise, skip this step.
 ```bash
 make
 ```
+To enable video recording functionality specify ENABLE_THEORA_RECORDER
+```bash
+make ENABLE_THEORA_RECORDER=true
+```
 
 5. After compilation the executable file will be created in the `out` folder. You can run it like so:
 ```bash
 ./out/neogol
+```
+To enable video recording functionality specify the video file name/path
+```bash
+./out/neogol recording.ogv
 ```
 It can be used as is, or installed system wide using `make install` (or `checkinstall` on Debian based systems). `make unisntall` will uninstall it (use package manager in case of `checkinstall`).
 
@@ -44,7 +57,7 @@ export AR=x86_64-w64-mingw32-ar # archiver variable
 ```
 Now, SDL does some shenanigans with the main function, that didn't work for me, so had do disable that for step 4:
 ```bash
-export CXXFLAGS="-DSDL_MAIN_HANDLED"
+export CXXFLAGS="$CXXFLAGS -DSDL_MAIN_HANDLED"
 ```
 You can try to skip this and see if it works for you, or try some other solutions to the problem.<br />
 Before proceeding with step 5 there is the timeless problem of dlls to solve. Fortunately it seems pretty easy with this setup, need to just copy over all the dlls from mingw bin:
@@ -57,11 +70,12 @@ git clone https://notabug.org/namark/neogol
 cd neogol
 export CXX=x86_64-w64-mingw32-g++
 export AR=x86_64-w64-mingw32-ar
+export CXXFLAGS="$CXXFLAGS -O3 -DNDEBUG -fno-rtti"
 ./tools/setup/init.sh
-export CXXFLAGS="-DSDL_MAIN_HANDLED"
-make
+export CXXFLAGS="$CXXFLAGS -DSDL_MAIN_HANDLED"
+make ENABLE_THEORA_RECORDER=true
 cp /usr/x86_64-w64-mingw32/sys-root/mingw/bin/*.dll ./out/
-./out/neogol
+./out/neogol recording.ogv
 ```
 
 <br />
