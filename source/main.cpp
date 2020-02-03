@@ -5,6 +5,8 @@
 #include <tuple>
 #include <bitset>
 #include <random>
+#include <vector>
+#include <map>
 #include <iostream>
 
 #include "simple/graphical.hpp"
@@ -12,6 +14,7 @@
 #include "simple/support.hpp"
 #include "simple/geom/algorithm.hpp"
 
+#include "recorder.h"
 #include "factors.hpp"
 #include "utils.hpp"
 
@@ -51,8 +54,15 @@ void gol_advance(const cell_writer&, range<int2>);
 using supported_concurrencies = std::integer_sequence<size_t, 1,2,4,6,8,10,12,14,16,32>;
 constexpr auto split_range = prepare_splits(supported_concurrencies{});
 
-int main() try
+int main(int argc, char** argv) try
 {
+	const char* recording_file = argc > 1 ? argv[1] : nullptr;
+	bool recording_started = false;
+	size_t recorded_frame_count = 0;
+	size_t current_recording_frame = 0;
+	std::map<size_t,std::vector<interactive::event>> event_record;
+	auto current_event_record = event_record.begin();
+	std::optional<recorder> recorder;
 
 	auto selected_concurrency = upper_bound(supported_concurrencies{}, std::thread::hardware_concurrency());
 	std::cout << "Hardware concurrency: " << std::thread::hardware_concurrency() << '\n';
@@ -88,7 +98,7 @@ int main() try
 		std::fputs("Wow! index8 surface has no palette???", stderr);
 		return -1;
 	}
-
+	surface world_snapshot(world);
 
 	auto pixels = world.pixels();
 	if(!std::holds_alternative<cell_writer>(pixels))
@@ -96,7 +106,7 @@ int main() try
 		std::fputs("Wow! Can't access index8 surface pixels as bytes???", stderr);
 		return -2;
 	}
-	auto cells = std::get<cell_writer>(world.pixels());
+	auto cells = std::get<cell_writer>(pixels);
 
 	surface intermediate(win.size(), win.surface().format());
 
@@ -111,74 +121,144 @@ int main() try
 	bool live = false;
 	bool live_once = false;
 	size_t history = 0;
+	auto cell_size_snapshot = cell_size;
+	bool live_snapshot = live;
+	size_t history_snapshot = history;
+
+	using namespace simple::interactive;
+	auto quit_handler = [&done](quit_request)
+		{ done = true; return false; };
+	auto event_handler = support::overloaded
+	{
+		quit_handler,
+		[&cells, &cell_size](mouse_down e)
+		{
+			if(e.data.button == mouse_button::left)
+				cells[e.data.position / *cell_size] ^= 1;
+			return true;
+		},
+		[&cells, &cell_size](mouse_motion e)
+		{
+			if(bool(e.data.button_state & mouse_button_mask::left))
+			{
+				auto start = e.data.position / *cell_size;
+				auto end = start - e.data.motion / *cell_size;
+				bresenham_line<int2>({start, end}, [&cells](int2 p)
+				{
+					cells[p] |= 1;
+				});
+				return true;
+			}
+			return false;
+		},
+		[&](key_pressed e)
+		{
+			switch(e.data.scancode)
+			{
+
+				case scancode::enter:
+					live = !live;
+				break;
+
+				case scancode::right:
+					live_once = true;
+					live = false;
+				break;
+
+				case scancode::left:
+					if(history > 1)
+					{
+						for(auto&& cell : cells.raw_range()) cell >>= 1;
+						--history;
+					}
+					live = false;
+				break;
+
+				case scancode::equals:
+				case scancode::kp_plus:
+					if(cell_size < cell_sizes.end()-1)
+						++cell_size;
+				break;
+
+				case scancode::minus:
+				case scancode::kp_minus:
+					if(cell_size > cell_sizes.begin())
+						--cell_size;
+				break;
+
+				case scancode::r:
+					if(pressed(scancode::rshift) || pressed(scancode::lshift))
+					{
+						if(recording_file)
+						{
+							recording_started = !recording_started;
+							if(recording_started)
+							{
+								std::cout << "Recording" << '\n';
+								blit(world, world_snapshot);
+								live_snapshot = live;
+								history_snapshot = history;
+								cell_size_snapshot = cell_size;
+								recorded_frame_count = 0;
+							}
+							else
+							{
+								std::cout << "Rendering" << '\n';
+								recorder.emplace(recording_file, win.size());
+								current_recording_frame = 0;
+								current_event_record = event_record.begin();
+								blit(world_snapshot, world);
+								live = live_snapshot;
+								history = history_snapshot;
+								cell_size = cell_size_snapshot;
+							}
+
+						}
+						return false;
+					}
+				break;
+
+				default: return false;
+			}
+			return true;
+		},
+		[](auto&&){ return false; }
+	};
+	auto recording_event_handler = support::overloaded
+	{
+		quit_handler,
+		[](auto&&){ return false; }
+	};
+
 	auto current_frame = steady_clock::now();
 	while(!done)
 	{
 		current_frame = steady_clock::now();
 
-		using namespace simple::interactive;
-		while(auto event = next_event())
+		if(recorder)
 		{
-			std::visit(support::overloaded
+			while(auto event = next_event())
+				std::visit(recording_event_handler, *event);
+
+			if(current_event_record != event_record.end())
+				if(current_event_record->first < current_recording_frame)
+					++current_event_record;
+
+			// have to check this again?? come ooon...!
+			if(current_event_record != event_record.end())
+				if(current_event_record->first == current_recording_frame)
+					for(auto&& event : current_event_record->second)
+						std::visit(event_handler, event);
+		}
+		else
+		{
+			while(auto event = next_event())
 			{
-				[&done](quit_request){ done = true; },
-				[&cells, &cell_size](mouse_down e)
-				{
-					if(e.data.button == mouse_button::left)
-						cells[e.data.position / *cell_size] ^= 1;
-				},
-				[&cells, &cell_size](mouse_motion e)
-				{
-					if(bool(e.data.button_state & mouse_button_mask::left))
-					{
-						auto start = e.data.position / *cell_size;
-						auto end = start - e.data.motion / *cell_size;
-						bresenham_line<int2>({start, end}, [&cells](int2 p)
-						{
-							cells[p] |= 1;
-						});
-					}
-				},
-				[&](key_pressed e)
-				{
-					switch(e.data.scancode)
-					{
+				auto record = std::visit(event_handler, *event);
 
-						case scancode::enter:
-							live = !live;
-						break;
-
-						case scancode::right:
-							live_once = true;
-							live = false;
-						break;
-
-						case scancode::left:
-							if(history > 1)
-							{
-								for(auto&& cell : cells.raw_range()) cell >>= 1;
-								--history;
-							}
-							live = false;
-						break;
-
-						case scancode::equals:
-						case scancode::kp_plus:
-							if(cell_size < cell_sizes.end()-1)
-								++cell_size;
-						break;
-
-						case scancode::minus:
-						case scancode::kp_minus:
-							if(cell_size > cell_sizes.begin())
-								--cell_size;
-						break;
-
-						default: break;
-					}
-				},
-				[](auto&&){}
-			}, *event);
+				if(recording_started && record)
+					event_record[recorded_frame_count-1].push_back(*event);
+			}
 		}
 
 		const int2 active_size = world.size() / *cell_size;
@@ -189,6 +269,7 @@ int main() try
 
 			// technically UB? but should work fine for any sane arch
 			// not too hard to un-UB with small performance hit
+			// also TODO: if the world is small(er than nproc * cacheline) don't split
 			support::apply_for(selected_concurrency.index,
 				[&](auto splitter)
 				{
@@ -231,6 +312,29 @@ int main() try
 
 		win.update();
 		frametime_logger.log(steady_clock::now() - current_frame);
+
+		if(recording_started)
+		{
+			++recorded_frame_count;
+		}
+		else if(recorder)
+		{
+			if(current_recording_frame < recorded_frame_count)
+			{
+				if(current_recording_frame == recorded_frame_count - 1 || done)
+				{
+					recorder->record(world, *cell_size, true);
+					recorder.reset();
+					event_record.clear();
+				}
+				else
+					recorder->record(world, *cell_size, false);
+			}
+			++current_recording_frame;
+			std::cout << "rendered: "
+				<< current_recording_frame << '/'
+				<< recorded_frame_count << '\n';
+		}
 
 		// this is not very precise, maybe busy wait for last millisecond(or less)
 		std::this_thread::sleep_until(current_frame + frametime);
