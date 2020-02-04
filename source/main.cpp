@@ -113,7 +113,6 @@ int main(int argc, char** argv) try
 	std::seed_seq seeds{std::random_device{}(), std::random_device{}()};
 	std::mt19937_64 twister{seeds};
 	std::uniform_int_distribution<cell_type> dist{0,255};
-	std::generate(cells.raw_range().begin(), cells.raw_range().end(), [&]() { return dist(twister); });
 
 	frametime_logger frametime_logger;
 	bool done = false;
@@ -186,6 +185,16 @@ int main(int argc, char** argv) try
 						--cell_size;
 				break;
 
+				case scancode::grave:
+					std::generate(cells.raw_range().begin(), cells.raw_range().end(), [&]() { return dist(twister); });
+					history = 8;
+				break;
+
+				case scancode::backspace:
+					std::fill(cells.raw_range().begin(), cells.raw_range().end(), 0);
+					history = 0;
+				break;
+
 				case scancode::r:
 					if(pressed(scancode::rshift) || pressed(scancode::lshift))
 					{
@@ -227,6 +236,23 @@ int main(int argc, char** argv) try
 	auto recording_event_handler = support::overloaded
 	{
 		quit_handler,
+		[&](key_pressed e)
+		{
+			switch(e.data.scancode)
+			{
+				case scancode::escape: if(recorder)
+				{
+					std::cout << "Rendering interrupted" << '\n';
+					recorder->record(world, *cell_size, true);
+					recorder.reset();
+					event_record.clear();
+					return true;
+				}
+				break;
+				default: break;
+			}
+			return false;
+		},
 		[](auto&&){ return false; }
 	};
 
@@ -237,18 +263,22 @@ int main(int argc, char** argv) try
 
 		if(recorder)
 		{
+			bool escaped = false;
 			while(auto event = next_event())
-				std::visit(recording_event_handler, *event);
+				escaped |= std::visit(recording_event_handler, *event);
 
-			if(current_event_record != event_record.end())
-				if(current_event_record->first < current_recording_frame)
-					++current_event_record;
+			if(!escaped)
+			{
+				if(current_event_record != event_record.end())
+					if(current_event_record->first < current_recording_frame)
+						++current_event_record;
 
-			// have to check this again?? come ooon...!
-			if(current_event_record != event_record.end())
-				if(current_event_record->first == current_recording_frame)
-					for(auto&& event : current_event_record->second)
-						std::visit(event_handler, event);
+				// have to check this again?? come ooon...!
+				if(current_event_record != event_record.end())
+					if(current_event_record->first == current_recording_frame)
+						for(auto&& event : current_event_record->second)
+							std::visit(event_handler, event);
+			}
 		}
 		else
 		{
@@ -386,4 +416,3 @@ void gol_advance(const cell_writer& cells, range<int2> range)
 
 	});
 }
-
