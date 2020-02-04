@@ -1,14 +1,21 @@
 Multi-threaded game of life with 8 generation history (current + 7 generations back).
 
 ## Use instructions
+
 ### Overview
-Mouse - draw living cells.<br />
-Enter/Return - toggle life at ~60 generation per second.<br />
-Right Arrow - step forward one generation.<br />
-Left Arrow - step backward one generation.<br />
-\+ - zoom in<br />
-\- - zoom out<br />
-Shift+R - start/stop recording, when recording is stopped, it'll take some time to render it to a file, frames being played back at the rate of video encoding<br />
+TODO
+
+### Controls
+Mouse : draw living cells.<br />
+Enter/Return : toggle life at ~60 generation per second.<br />
+Right Arrow : step forward one generation.<br />
+Left Arrow : step backward one generation.<br />
+\+ : zoom in<br />
+\- : zoom out<br />
+~ : fill the screen at random<br />
+Backspace : clear the screen<br />
+Shift+R : start/stop recording, when recording is stopped, it'll take some time to render it to a file, frames being played back at the rate of video encoding<br />
+Escape : stop the rendering process (video until that point still saved)<br />
 
 
 ### Special secret dangerous command line parameters
