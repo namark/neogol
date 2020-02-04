@@ -153,7 +153,7 @@ recorder::recorder(std::string, int2)
 {
 }
 
-void recorder::record(const simple::graphical::surface&, bool)
+void recorder::record(const simple::graphical::surface&, int, bool)
 {
 }
 
