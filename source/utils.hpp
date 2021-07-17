@@ -28,21 +28,21 @@ std::array<range<T>,N> split(const range<T> whole, M mask)
 {
 	std::array<range<T>, N> pieces{};
 	T size = whole.upper() - whole.lower();
-	T piece_size = size / N;
-	T remainder = size % N;
+	auto piece_size = T{size / N};
+	auto remainder = T{size % N};
 
 	auto lower = whole.lower();
 	for(size_t i = 0; i < N; ++i)
 	{
 		auto& piece = pieces[i];
-		piece = range<T>{lower, lower + piece_size + T{remainder --> T{}}};
+		piece = range<T>{lower, lower + piece_size + (remainder --> T{})};
 		lower = piece.upper();
 
 		// apply mask
 		for(size_t j = 0; j < piece.bounds.size(); ++j)
 		{
-			piece.bounds[j] *= T{mask};
-			piece.bounds[j] += whole.bounds[j] * T{~mask};
+			piece.bounds[j] *= mask;
+			piece.bounds[j] += whole.bounds[j] * ~mask;
 		}
 	}
 
