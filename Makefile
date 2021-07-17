@@ -4,6 +4,7 @@ override CPPFLAGS	+= -MMD -MP
 override CPPFLAGS	+= $(shell cat .cxxflags | xargs)
 override CPPFLAGS	+= -I./include -I./source
 override LDFLAGS	+= $(shell cat .ldflags | xargs)
+override LDLIBS		+= $(shell cat .ldlibs | xargs)
 override LDFLAGS	+= -L./lib
 override LDLIBS		+= -lSDL2main -lSDL2 -lpthread
 
